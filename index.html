@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HRD Hub | Employee Portal</title>
+    
+    <!-- Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Kanit', 'sans-serif'] },
+                    colors: {
+                        gaming: { dark: '#0b1120', card: '#162032', primary: '#0ea5e9', accent: '#8b5cf6', success: '#10b981', warning: '#f59e0b', danger: '#ef4444' }
+                    },
+                    animation: {
+                        'glow': 'glow 3s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #0ea5e9, 0 0 10px rgba(14,165,233,0.5)' },
+                            '100%': { boxShadow: '0 0 20px #0ea5e9, 0 0 30px #8b5cf6' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Libs (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #0b1120; color: #f8fafc; overscroll-behavior-y: contain; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #162032; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        .spa-view { display: none; }
+        .spa-view.active { display: block; animation: slideUp 0.4s ease-out forwards; }
+        
+        /* Glassmorphism */
+        .glass-card { background: rgba(22, 32, 50, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .glass-nav { background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); }
+        
+        .text-glow { text-shadow: 0 0 15px rgba(14,165,233,0.8); }
+
+        /* Global Loader */
+        #global-loader { position: fixed; inset: 0; background: rgba(11, 17, 32, 0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .cyber-spinner { width: 60px; height: 60px; border: 3px solid transparent; border-top-color: #0ea5e9; border-right-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; box-shadow: 0 0 20px rgba(14,165,233,0.4); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Navigation Active States */
+        .sidebar-item.active { background: linear-gradient(90deg, rgba(14,165,233,0.15) 0%, transparent 100%); border-left: 3px solid #0ea5e9; color: #0ea5e9; }
+        .bottom-nav-item.active { color: #0ea5e9; transform: translateY(-3px); transition: all 0.3s ease; text-shadow: 0 0 10px rgba(14,165,233,0.5); }
+        .bottom-nav-item.active::after { content: ''; position: absolute; bottom: -8px; width: 4px; height: 4px; background: #0ea5e9; border-radius: 50%; box-shadow: 0 0 8px #0ea5e9; }
+        
+        /* Toast */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; background: #162032; border-left: 4px solid #0ea5e9; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white; animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 12px; }
+        @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Skeleton Loading */
+        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: pulse-skel 1.5s infinite linear; border-radius: 0.5rem; }
+        @keyframes pulse-skel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Pull to Refresh */
+        #ptr-indicator { height: 0; overflow: hidden; transition: height 0.3s; display: flex; align-items: center; justify-content: center; color: #0ea5e9; }
+        
+        /* Hide scrollbar for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- Global Loader -->
+    <div id="global-loader">
+        <div class="cyber-spinner mb-6"></div>
+        <p class="text-gaming-primary font-bold tracking-[0.3em] text-glow animate-pulse-slow">CONNECTING TO HRD CORE...</p>
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <!-- ========================================== -->
+    <!-- SESSION SELECTOR (MOCK LOGIN)              -->
+    <!-- ========================================== -->
+    <div id="session-modal" class="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card p-8 rounded-3xl w-full max-w-md border border-gaming-primary/30 shadow-[0_0_50px_rgba(14,165,233,0.15)] relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gaming-primary to-gaming-accent animate-glow"></div>
+            <div class="text-center mb-8">
+                <i data-lucide="fingerprint" class="w-16 h-16 text-gaming-primary mx-auto mb-4 drop-shadow-[0_0_10px_rgba(14,165,233,0.8)]"></i>
+                <h1 class="text-2xl font-bold text-white tracking-wider">HRD <span class="text-gaming-primary">HUB</span></h1>
+                <p class="text-gray-400 text-sm mt-1">Please identify yourself to enter the portal.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <p class="text-xs text-gaming-primary font-medium uppercase tracking-wider mb-2">Select Identity (Mock Session)</p>
+                <div class="relative">
+                    <select id="user-selector" class="w-full bg-gaming-dark/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-gaming-primary focus:border-gaming-primary block p-3.5 appearance-none">
+                        <option value="">-- กำลังโหลดรายชื่อ --</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <button onclick="startSession()" class="w-full bg-gradient-to-r from-gaming-primary to-gaming-accent hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)] transform hover:-translate-y-0.5">
+                    ENTER PORTAL
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-500 text-center mt-6">* ระบบนี้ออกแบบให้เข้าใช้งานได้โดยไม่ต้อง Login จริงเพื่อการทดสอบ</p>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SIDEBAR (DESKTOP)                          -->
+    <!-- ========================================== -->
+    <aside class="hidden md:flex flex-col w-72 glass-card border-r border-gray-800/50 h-full shrink-0 z-20 relative">
+        <!-- Logo -->
+        <div class="p-8 flex items-center space-x-3 border-b border-gray-800/50">
+            <div class="bg-gaming-dark p-2 rounded-xl border border-gaming-primary/30 shadow-[0_0_15px_rgba(14,165,233,0.2)]">
+                <i data-lucide="hexagon" class="text-gaming-primary w-8 h-8 drop-shadow-[0_0_5px_#0ea5e9]"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-widest leading-none">HRD<span class="text-gaming-primary">HUB</span></h1>
+                <span class="text-[10px] text-gaming-accent uppercase font-bold tracking-widest">Portal System</span>
+            </div>
+        </div>
+
+        <!-- User Profile Mini -->
+        <div class="p-6 pb-2">
+            <div class="bg-gradient-to-b from-gaming-card to-gaming-dark rounded-2xl p-4 border border-gray-800 shadow-inner flex items-center space-x-4 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-gaming-primary/10 rounded-full blur-xl group-hover:bg-gaming-primary/20 transition duration-500"></div>
+                <img id="sidebar-avatar" src="" class="w-12 h-12 rounded-full object-cover border-2 border-gaming-primary/50" onerror="this.src='https://ui-avatars.com/api/?name=U&background=0f172a&color=0ea5e9'">
+                <div class="overflow-hidden flex-1">
+                    <p id="sidebar-name" class="text-sm font-bold text-white truncate w-full">Guest</p>
+                    <p id="sidebar-dept" class="text-[10px] text-gray-400 truncate w-full">Department</p>
+                    <div class="mt-1 flex items-center bg-gaming-dark/80 px-2 py-0.5 rounded-md inline-block border border-gaming-warning/20">
+                        <i data-lucide="zap" class="w-3 h-3 text-gaming-warning mr-1"></i>
+                        <span id="sidebar-points" class="text-xs font-bold text-gaming-warning drop-shadow-[0_0_2px_#f59e0b]">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-4 mb-2 mt-2">Main Menu</p>
+            <button onclick="navTo('dashboard')" class="sidebar-item active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Overview</span>
+            </button>
+            <button onclick="navTo('news')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="radio" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">News & Feeds</span>
+            </button>
+            
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-4 mb-2 mt-6">Engagement</p>
+            <button onclick="navTo('tasks')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="target" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Missions</span>
+            </button>
+            <button onclick="navTo('rewards')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="gift" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Rewards Shop</span>
+            </button>
+            <button onclick="navTo('privileges')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="ticket" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Privileges</span>
+            </button>
+
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-4 mb-2 mt-6">Resources</p>
+            <button onclick="navTo('directory')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="users" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Directory</span>
+            </button>
+            <button onclick="navTo('documents')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/30 transition group">
+                <i data-lucide="folder-open" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Documents</span>
+            </button>
+
+            <div id="admin-menu-section" class="hidden">
+                <p class="text-[10px] text-gaming-danger font-bold uppercase tracking-widest px-4 mb-2 mt-6">Admin Zone</p>
+                <button onclick="navTo('admin')" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gaming-danger/70 hover:text-gaming-danger hover:bg-red-500/10 transition group">
+                    <i data-lucide="shield-alert" class="w-5 h-5 group-hover:scale-110 transition-transform"></i><span class="font-medium">Management</span>
+                </button>
+            </div>
+        </nav>
+        
+        <div class="p-6 border-t border-gray-800/50">
+            <button onclick="location.reload()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium text-sm">
+                <i data-lucide="log-out" class="w-4 h-4"></i><span>Switch Profile</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- MAIN CONTENT AREA                          -->
+    <!-- ========================================== -->
+    <main id="main-scroll" class="flex-1 h-full overflow-y-auto relative pb-28 md:pb-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
+        
+        <!-- Pull to refresh indicator -->
+        <div id="ptr-indicator"><i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i><span class="ml-2 text-sm font-medium">Pull to refresh...</span></div>
+
+        <!-- Topbar Mobile -->
+        <header class="md:hidden flex justify-between items-center p-4 glass-card sticky top-0 z-30 border-b border-gray-800/80">
+            <div class="flex items-center space-x-2">
+                <div class="bg-gaming-dark p-1.5 rounded-lg border border-gaming-primary/30">
+                    <i data-lucide="hexagon" class="text-gaming-primary w-5 h-5 drop-shadow-[0_0_5px_#0ea5e9]"></i>
+                </div>
+                <span class="font-bold text-white text-glow text-lg tracking-wider">HRD<span class="text-gaming-primary">HUB</span></span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center bg-gaming-dark/80 px-3 py-1.5 rounded-full border border-gaming-warning/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+                    <i data-lucide="zap" class="text-gaming-warning w-3.5 h-3.5 mr-1.5"></i>
+                    <span id="mobile-points" class="text-sm font-bold text-white">0</span>
+                </div>
+                <img id="mobile-avatar" src="" class="w-8 h-8 rounded-full border border-gaming-primary object-cover cursor-pointer" onclick="location.reload()">
+            </div>
+        </header>
+
+        <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+            
+            <!-- 📱 VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="spa-view active space-y-8">
+                
+                <!-- Banners Carousel -->
+                <div class="relative rounded-3xl overflow-hidden glass-card border border-gray-800/50 aspect-[21/9] md:aspect-[32/9] shadow-[0_10px_30px_rgba(0,0,0,0.5)] group">
+                    <div id="banner-container" class="w-full h-full flex transition-transform duration-500 ease-out">
+                        <div class="w-full h-full shrink-0 skeleton"></div>
+                    </div>
+                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-gaming-dark to-transparent h-1/2 pointer-events-none"></div>
+                    <!-- Banner Nav -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2" id="banner-dots"></div>
+                </div>
+
+                <!-- Quick Stats Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-card p-4 md:p-6 rounded-2xl border-t-2 border-gaming-primary relative overflow-hidden group hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-10 transition duration-500"><i data-lucide="radio" class="w-32 h-32 text-white"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-gaming-primary/10 flex items-center justify-center mb-3">
+                            <i data-lucide="radio" class="w-5 h-5 text-gaming-primary"></i>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white" id="stat-news">0</h3>
+                        <p class="text-gray-400 text-[10px] md:text-xs font-medium uppercase tracking-widest mt-1">ประกาศล่าสุด</p>
+                    </div>
+                    <div class="glass-card p-4 md:p-6 rounded-2xl border-t-2 border-gaming-accent relative overflow-hidden group hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-10 transition duration-500"><i data-lucide="target" class="w-32 h-32 text-white"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-gaming-accent/10 flex items-center justify-center mb-3">
+                            <i data-lucide="target" class="w-5 h-5 text-gaming-accent"></i>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white" id="stat-tasks">0</h3>
+                        <p class="text-gray-400 text-[10px] md:text-xs font-medium uppercase tracking-widest mt-1">ภารกิจที่ทำได้</p>
+                    </div>
+                    <div class="glass-card p-4 md:p-6 rounded-2xl border-t-2 border-gaming-warning relative overflow-hidden group hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-10 transition duration-500"><i data-lucide="ticket" class="w-32 h-32 text-white"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-gaming-warning/10 flex items-center justify-center mb-3">
+                            <i data-lucide="ticket" class="w-5 h-5 text-gaming-warning"></i>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white" id="stat-privileges">0</h3>
+                        <p class="text-gray-400 text-[10px] md:text-xs font-medium uppercase tracking-widest mt-1">สิทธิพิเศษ</p>
+                    </div>
+                    <div class="glass-card p-4 md:p-6 rounded-2xl border-t-2 border-gaming-success relative overflow-hidden group hover:-translate-y-1 transition duration-300">
+                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-10 transition duration-500"><i data-lucide="users" class="w-32 h-32 text-white"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-gaming-success/10 flex items-center justify-center mb-3">
+                            <i data-lucide="users" class="w-5 h-5 text-gaming-success"></i>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white" id="stat-emps">0</h3>
+                        <p class="text-gray-400 text-[10px] md:text-xs font-medium uppercase tracking-widest mt-1">พนักงานทั้งหมด</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Top News -->
+                    <div class="lg:col-span-2 glass-card rounded-3xl border border-gray-800/50 p-6 flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-white tracking-wide flex items-center"><i data-lucide="flame" class="w-5 h-5 mr-2 text-gaming-danger animate-pulse"></i> LATEST <span class="text-gaming-primary ml-1">NEWS</span></h3>
+                            <button onclick="navTo('news')" class="text-xs text-gaming-primary hover:text-white transition">View All</button>
+                        </div>
+                        <div id="dash-news-container" class="space-y-4 flex-1">
+                            <div class="skeleton h-24 w-full"></div><div class="skeleton h-24 w-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- Top Leaderboard -->
+                    <div class="glass-card rounded-3xl border border-gray-800/50 p-6 flex flex-col">
+                        <h3 class="text-lg font-bold text-white tracking-wide mb-6 flex items-center"><i data-lucide="trophy" class="w-5 h-5 mr-2 text-gaming-warning drop-shadow-[0_0_5px_#f59e0b]"></i> TOP <span class="text-gaming-warning ml-1">PLAYERS</span></h3>
+                        <div id="dash-leaderboard-container" class="space-y-3 flex-1">
+                            <div class="skeleton h-14 w-full"></div><div class="skeleton h-14 w-full"></div><div class="skeleton h-14 w-full"></div>
+                        </div>
+                        <button onclick="navTo('rewards')" class="mt-4 w-full py-3 bg-gaming-dark border border-gray-700 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:border-gaming-primary transition">VIEW FULL RANKING</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: NEWS & FEEDS -->
+            <div id="view-news" class="spa-view space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-white tracking-widest uppercase">Company <span class="text-gaming-primary">News</span></h2>
+                        <p class="text-gray-400 text-sm mt-1">อัปเดตข่าวสารและประกาศจาก HRD</p>
+                    </div>
+                    <div class="w-full md:w-auto relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="search-news" placeholder="ค้นหาประกาศ..." class="w-full md:w-64 bg-gaming-dark/80 border border-gray-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:border-gaming-primary focus:ring-1 focus:ring-gaming-primary transition outline-none">
+                    </div>
+                </div>
+                
+                <!-- Category Filter (Horizontal Scroll) -->
+                <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="news-filter-container">
+                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-primary text-gaming-dark shadow-[0_0_10px_rgba(14,165,233,0.3)] whitespace-nowrap">ALL NEWS</button>
+                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">ANNOUNCEMENT</button>
+                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">ACTIVITY</button>
+                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">WELFARE</button>
+                </div>
+
+                <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: MISSIONS (TASKS) -->
+            <div id="view-tasks" class="spa-view space-y-6">
+                <div>
+                    <h2 class="text-3xl font-black text-white tracking-widest uppercase">Active <span class="text-gaming-accent">Missions</span></h2>
+                    <p class="text-gray-400 text-sm mt-1">ทำภารกิจเพื่อสะสม EXP และ Points</p>
+                </div>
+
+                <div id="tasks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: REWARDS SHOP -->
+            <div id="view-rewards" class="spa-view space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-white tracking-widest uppercase">Reward <span class="text-gaming-warning">Shop</span></h2>
+                        <p class="text-gray-400 text-sm mt-1">แลกรับของรางวัลและสิทธิพิเศษสุด Exculsive</p>
+                    </div>
+                    <div class="glass-card px-5 py-3 rounded-2xl border border-gaming-warning/30 shadow-[0_0_15px_rgba(245,158,11,0.15)] flex items-center space-x-4">
+                        <div>
+                            <span class="text-[10px] text-gray-400 block uppercase font-bold tracking-widest">Available Points</span>
+                            <span class="text-2xl font-black text-white drop-shadow-md" id="shop-points-display">0</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-gaming-warning/20 flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-gaming-warning drop-shadow-[0_0_5px_#f59e0b]"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-800/80 mb-6">
+                    <button class="px-6 py-3 border-b-2 border-gaming-warning text-gaming-warning font-bold text-sm">ITEM SHOP</button>
+                    <button onclick="navTo('redemptions')" class="px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-300 font-bold text-sm">MY REWARDS</button>
+                </div>
+
+                <div id="rewards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: MY REDEMPTIONS (Sub-view of Rewards) -->
+            <div id="view-redemptions" class="spa-view space-y-6">
+                <div class="flex items-center space-x-3 mb-6">
+                    <button onclick="navTo('rewards')" class="w-10 h-10 rounded-full bg-gaming-dark border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition"><i data-lucide="arrow-left" class="w-5 h-5 text-white"></i></button>
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-widest uppercase">My <span class="text-gaming-success">Rewards</span></h2>
+                        <p class="text-gray-400 text-sm">ประวัติการแลกของรางวัลและ QR Code</p>
+                    </div>
+                </div>
+                
+                <div id="redemptions-list" class="space-y-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: PRIVILEGES -->
+            <div id="view-privileges" class="spa-view space-y-6">
+                <div>
+                    <h2 class="text-3xl font-black text-white tracking-widest uppercase">Staff <span class="text-[#ec4899]">Privileges</span></h2>
+                    <p class="text-gray-400 text-sm mt-1">สิทธิพิเศษ โปรโมชั่น เฉพาะพนักงานบริษัท</p>
+                </div>
+                <div id="privileges-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: DIRECTORY -->
+            <div id="view-directory" class="spa-view space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-white tracking-widest uppercase">Employee <span class="text-gaming-primary">Directory</span></h2>
+                        <p class="text-gray-400 text-sm mt-1">ค้นหารายชื่อและข้อมูลการติดต่อพนักงาน</p>
+                    </div>
+                    <div class="w-full md:w-72 relative">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="search-emp" onkeyup="filterDirectory()" placeholder="ค้นหาชื่อ, แผนก, รหัส..." class="w-full bg-gaming-card border border-gray-700 rounded-full py-3 pl-12 pr-4 text-sm text-white focus:border-gaming-primary focus:ring-1 focus:ring-gaming-primary transition outline-none shadow-inner">
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl border border-gray-800/80 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-gaming-dark/80 text-gray-400 text-xs uppercase tracking-widest border-b border-gray-700/50">
+                                    <th class="p-5 font-bold">Profile</th>
+                                    <th class="p-5 font-bold">Emp Code</th>
+                                    <th class="p-5 font-bold">Department</th>
+                                    <th class="p-5 font-bold">Position</th>
+                                </tr>
+                            </thead>
+                            <tbody id="directory-table" class="divide-y divide-gray-800/50">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: DOCUMENTS -->
+            <div id="view-documents" class="spa-view space-y-6">
+                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-white tracking-widest uppercase">Document <span class="text-gaming-primary">Center</span></h2>
+                        <p class="text-gray-400 text-sm mt-1">คลังแบบฟอร์ม คู่มือ และเอกสารที่สำคัญของ HR</p>
+                    </div>
+                </div>
+
+                <div id="docs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- 📱 VIEW: ADMIN DASHBOARD (MOCK/SIMPLIFIED) -->
+            <div id="view-admin" class="spa-view space-y-6">
+                <div>
+                    <h2 class="text-3xl font-black text-gaming-danger tracking-widest uppercase text-glow">Admin <span class="text-white">Zone</span></h2>
+                    <p class="text-gray-400 text-sm mt-1 flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-1 text-gaming-success"></i> Management Dashboard & Approvals</p>
+                </div>
+
+                <!-- Admin Action Row -->
+                <div class="flex space-x-4 mb-6 overflow-x-auto no-scrollbar pb-2">
+                    <button class="glass-card px-6 py-3 rounded-xl border border-gaming-danger/30 text-white font-bold text-sm whitespace-nowrap flex items-center hover:bg-red-500/10 transition">
+                        <i data-lucide="check-square" class="w-4 h-4 mr-2 text-gaming-danger"></i> Approve Tasks <span class="ml-2 bg-gaming-danger text-white text-[10px] px-2 py-0.5 rounded-full" id="pending-task-count">0</span>
+                    </button>
+                    <button onclick="simulateSync()" class="glass-card px-6 py-3 rounded-xl border border-gray-700 text-gray-300 font-bold text-sm whitespace-nowrap flex items-center hover:text-white hover:border-gray-500 transition">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Sync from Google Sheet
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6 rounded-3xl border border-gray-800/80">
+                        <h3 class="text-lg font-bold text-white mb-4">Points Distributed (7 Days)</h3>
+                        <div class="h-64 w-full relative"><canvas id="adminChartPoints"></canvas></div>
+                    </div>
+                    <div class="glass-card p-6 rounded-3xl border border-gray-800/80 flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-4">Pending Task Submissions</h3>
+                        <div id="admin-pending-tasks" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                            <p class="text-sm text-gray-500 text-center py-10">No pending submissions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="md:hidden fixed bottom-0 w-full glass-nav z-40 flex justify-around p-2 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)] rounded-t-2xl">
+        <button onclick="navTo('dashboard')" class="bottom-nav-item active flex flex-col items-center justify-center p-2 text-gray-500 w-1/5 relative">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1.5"></i><span class="text-[9px] font-bold tracking-wider">Home</span>
+        </button>
+        <button onclick="navTo('news')" class="bottom-nav-item flex flex-col items-center justify-center p-2 text-gray-500 w-1/5 relative">
+            <i data-lucide="radio" class="w-5 h-5 mb-1.5"></i><span class="text-[9px] font-bold tracking-wider">News</span>
+        </button>
+        <button onclick="navTo('tasks')" class="bottom-nav-item flex flex-col items-center justify-center p-2 text-gray-500 w-1/5 relative">
+            <div class="absolute -top-6 bg-gradient-to-tr from-gaming-primary to-gaming-accent p-3.5 rounded-full text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] border-4 border-[#0b1120]">
+                <i data-lucide="target" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[9px] font-bold tracking-wider mt-8">Tasks</span>
+        </button>
+        <button onclick="navTo('rewards')" class="bottom-nav-item flex flex-col items-center justify-center p-2 text-gray-500 w-1/5 relative">
+            <i data-lucide="gift" class="w-5 h-5 mb-1.5"></i><span class="text-[9px] font-bold tracking-wider">Rewards</span>
+        </button>
+        <button onclick="navTo('directory')" class="bottom-nav-item flex flex-col items-center justify-center p-2 text-gray-500 w-1/5 relative">
+            <i data-lucide="users" class="w-5 h-5 mb-1.5"></i><span class="text-[9px] font-bold tracking-wider">Staff</span>
+        </button>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- MODALS                                     -->
+    <!-- ========================================== -->
+
+    <!-- Submit Task Modal -->
+    <div id="modal-task" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-card border border-gaming-primary/50 rounded-3xl shadow-[0_0_40px_rgba(14,165,233,0.2)] w-full max-w-md p-6 md:p-8 relative transform scale-95 transition-transform duration-300" id="modal-task-content">
+            <button onclick="closeModal('modal-task')" class="absolute top-5 right-5 text-gray-500 hover:text-white bg-gaming-dark p-2 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="w-12 h-12 bg-gaming-primary/10 rounded-2xl flex items-center justify-center mb-4 border border-gaming-primary/30">
+                <i data-lucide="upload-cloud" class="w-6 h-6 text-gaming-primary"></i>
+            </div>
+            <h3 class="text-2xl font-black mb-1 text-white tracking-wide" id="modal-task-title">Mission Report</h3>
+            <p class="text-sm text-gray-400 mb-6">อัปโหลดรูปภาพเพื่อยืนยันการทำภารกิจของคุณ</p>
+            
+            <div class="space-y-5">
+                <div id="image-preview" class="hidden w-full aspect-video rounded-xl border border-gray-700 overflow-hidden relative group">
+                    <img id="img-preview-src" src="" class="w-full h-full object-cover">
+                    <button onclick="removeTaskImage()" class="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-gaming-danger transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+                
+                <div id="upload-box" class="border-2 border-dashed border-gray-600 rounded-2xl p-8 text-center hover:border-gaming-primary hover:bg-gaming-primary/5 transition-colors cursor-pointer" onclick="document.getElementById('task-image').click()">
+                    <input type="file" id="task-image" accept="image/*" class="hidden" onchange="handleTaskImageSelect(event)">
+                    <i data-lucide="image-plus" class="w-10 h-10 text-gray-500 mx-auto mb-3"></i>
+                    <span class="text-sm font-bold text-gray-300 block mb-1">Tap to select photo</span>
+                    <span class="text-xs text-gray-500 block">JPG, PNG (Max 5MB)</span>
+                    <span class="text-[10px] text-gaming-primary block mt-2">* บีบอัดอัตโนมัติก่อนอัปโหลด</span>
+                </div>
+                
+                <input type="hidden" id="active-task-id">
+                <button id="btn-submit-task" onclick="submitTask()" class="w-full bg-gradient-to-r from-gaming-primary to-gaming-accent text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition shadow-[0_0_15px_rgba(14,165,233,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
+                    SUBMIT PROOF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="glass-card border border-gaming-warning/50 rounded-3xl shadow-[0_0_40px_rgba(245,158,11,0.2)] w-full max-w-sm p-8 text-center transform scale-95 transition-transform duration-200" id="modal-confirm-content">
+            <div class="w-16 h-16 rounded-full bg-gaming-warning/10 flex items-center justify-center mx-auto mb-5 border border-gaming-warning/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                <i data-lucide="alert-triangle" class="text-gaming-warning w-8 h-8 drop-shadow-[0_0_5px_#f59e0b]"></i>
+            </div>
+            <h3 class="text-2xl font-black mb-2 text-white tracking-widest uppercase" id="confirm-title">Confirm?</h3>
+            <p class="text-gray-400 mb-8 text-sm" id="confirm-desc">รายละเอียด</p>
+            <div class="flex space-x-3">
+                <button id="btn-confirm-cancel" class="flex-1 bg-gaming-dark text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition border border-gray-700">CANCEL</button>
+                <button id="btn-confirm-ok" class="flex-1 bg-gaming-warning text-gaming-dark font-black py-3 rounded-xl hover:bg-yellow-400 transition shadow-[0_0_15px_rgba(245,158,11,0.4)]">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="modal-qr" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-card border border-gaming-success/50 rounded-3xl shadow-[0_0_50px_rgba(16,185,129,0.2)] w-full max-w-sm p-8 text-center transform scale-95 transition-transform duration-300 relative" id="modal-qr-content">
+            <button onclick="closeModal('modal-qr')" class="absolute top-4 right-4 text-gray-500 hover:text-white bg-gaming-dark p-2 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <h3 class="text-xl font-black mb-1 text-white tracking-wide uppercase text-gaming-success">Reward Claim</h3>
+            <p class="text-sm text-gray-400 mb-6 line-clamp-1" id="qr-reward-name">Name</p>
+            
+            <div class="bg-white p-4 rounded-2xl inline-block mb-6 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <div id="qrcode" class="mx-auto"></div>
+            </div>
+            
+            <p class="text-xs text-gray-400">แสดง QR Code นี้ให้เจ้าหน้าที่ HR เพื่อรับรางวัล</p>
+            <p class="text-[10px] text-gray-600 mt-1 font-mono" id="qr-ref-code">REF: XXXX</p>
+        </div>
+    </div>
+
+    <!-- News Detail Modal -->
+    <div id="modal-news" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[60] hidden flex items-center justify-center p-0 md:p-4 opacity-0 transition-opacity duration-300 overflow-y-auto">
+        <div class="glass-card border border-gray-700 md:rounded-3xl w-full min-h-screen md:min-h-0 md:max-w-2xl bg-gaming-card/90 relative transform translate-y-full md:translate-y-0 md:scale-95 transition-transform duration-300" id="modal-news-content">
+            <button onclick="closeModal('modal-news')" class="fixed md:absolute top-4 right-4 z-10 text-white bg-black/50 hover:bg-gaming-primary p-2 rounded-full backdrop-blur transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            
+            <div class="w-full aspect-video md:rounded-t-3xl overflow-hidden bg-gaming-dark relative">
+                <img id="news-detail-img" src="" class="w-full h-full object-cover" onerror="this.style.display='none'">
+            </div>
+            <div class="p-6 md:p-8">
+                <span id="news-detail-cat" class="text-[10px] font-bold uppercase tracking-widest text-gaming-primary mb-2 block">CATEGORY</span>
+                <h2 id="news-detail-title" class="text-2xl md:text-3xl font-black text-white mb-4 leading-tight">Title</h2>
+                <div class="flex items-center space-x-2 text-xs text-gray-500 mb-6 border-b border-gray-800 pb-4">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> <span id="news-detail-date">Date</span>
+                </div>
+                <div id="news-detail-content" class="text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line font-light">
+                    Content
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // ==========================================
+        // 1. SUPABASE INIT & APP STATE
+        // ==========================================
+        // ใส่ URL และ Key ของโปรเจกต์คุณ (ตัวแปรบังคับใช้ dbClient)
+        const SUPABASE_URL = 'https://udmisytsnslvzlvdddjz.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_7tEis15mzdojOTJnB81XlQ_4HyMrI9Z';
+        
+        let dbClient;
+        const AppState = {
+            currentUser: null,
+            currentView: '',
+            employees: [], // Cache for directory
+            selectedTaskFile: null,
+            isSubmitting: false
+        };
+
+        try {
+            dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error("Supabase config error:", e);
+        }
+
+        // ==========================================
+        // 2. LIFECYCLE & INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initPullToRefresh();
+            
+            if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+                checkMockSession();
+            } else {
+                showToast('กรุณาตั้งค่า Supabase URL ใน Source Code', 'error');
+            }
+        });
+
+        async function checkMockSession() {
+            // ระบบจำลอง Session ดึงรายชื่อพนักงานมาให้เลือก
+            const savedEmpId = localStorage.getItem('hrd_mock_session');
+            
+            if (savedEmpId) {
+                await loadUserProfile(savedEmpId);
+            } else {
+                showSessionSelector();
+            }
+        }
+
+        async function showSessionSelector() {
+            document.getElementById('session-modal').style.display = 'flex';
+            try {
+                const { data, error } = await dbClient.from('employee_directory').select('id, emp_code, full_name, department').eq('is_active', true).order('emp_code');
+                if (error) throw error;
+                
+                const select = document.getElementById('user-selector');
+                select.innerHTML = '<option value="">-- เลือกตัวตนของคุณ --</option>';
+                data.forEach(emp => {
+                    select.innerHTML += `<option value="${emp.id}">[${emp.emp_code}] ${emp.full_name} (${emp.department})</option>`;
+                });
+            } catch(e) {
+                showToast('ไม่สามารถดึงรายชื่อพนักงานได้', 'error');
+            }
+        }
+
+        async function startSession() {
+            const select = document.getElementById('user-selector');
+            if(!select.value) {
+                showToast('กรุณาเลือกรายชื่อพนักงาน', 'warning'); return;
+            }
+            localStorage.setItem('hrd_mock_session', select.value);
+            document.getElementById('session-modal').style.display = 'none';
+            await loadUserProfile(select.value);
+        }
+
+        async function loadUserProfile(empId) {
+            showLoader('AUTHENTICATING...');
+            try {
+                const { data, error } = await dbClient.from('employee_directory').select('*').eq('id', empId).single();
+                if (error) {
+                    localStorage.removeItem('hrd_mock_session');
+                    throw error;
+                }
+                
+                AppState.currentUser = data;
+                
+                // Update UI Profile
+                const avatar = data.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.full_name)}&background=0f172a&color=0ea5e9&bold=true`;
+                document.getElementById('sidebar-name').innerText = data.full_name;
+                document.getElementById('sidebar-dept').innerText = data.department || 'Staff';
+                document.getElementById('sidebar-avatar').src = avatar;
+                document.getElementById('mobile-avatar').src = avatar;
+                
+                updatePointsDisplay(data.points_balance);
+
+                // Show admin menu if HR or Management
+                if(data.department === 'HRD' || data.department === 'Management') {
+                    document.getElementById('admin-menu-section').classList.remove('hidden');
+                } else {
+                    document.getElementById('admin-menu-section').classList.add('hidden');
+                }
+
+                navTo('dashboard');
+            } catch(e) {
+                showSessionSelector();
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function updatePointsDisplay(points) {
+            const ptsStr = (points || 0).toLocaleString();
+            document.getElementById('sidebar-points').innerText = ptsStr;
+            document.getElementById('mobile-points').innerText = ptsStr;
+            const shopDisplay = document.getElementById('shop-points-display');
+            if(shopDisplay) shopDisplay.innerText = ptsStr;
+        }
+
+        // ==========================================
+        // 3. UI UTILITIES
+        // ==========================================
+        function showLoader(msg = 'Processing...') {
+            document.getElementById('loader-text').innerText = msg;
+            document.getElementById('global-loader').style.display = 'flex';
+        }
+        function hideLoader() { document.getElementById('global-loader').style.display = 'none'; }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let icon = 'info', color = 'text-gaming-primary', border = 'border-gaming-primary';
+            if(type === 'error') { icon = 'alert-octagon'; color = 'text-gaming-danger'; border = 'border-gaming-danger'; }
+            if(type === 'success') { icon = 'check-circle-2'; color = 'text-gaming-success'; border = 'border-gaming-success'; }
+            if(type === 'warning') { icon = 'alert-triangle'; color = 'text-gaming-warning'; border = 'border-gaming-warning'; }
+
+            toast.className = `toast ${border}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 shrink-0 ${color}"></i><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => { 
+                toast.style.animation = 'slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards reverse'; 
+                setTimeout(()=>toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showConfirm(title, desc) {
+            return new Promise((resolve) => {
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-desc').innerText = desc;
+                
+                const modal = document.getElementById('modal-confirm');
+                const content = document.getElementById('modal-confirm-content');
+                
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+                
+                const closeAction = (result) => {
+                    modal.classList.add('opacity-0');
+                    content.classList.add('scale-95');
+                    setTimeout(() => { modal.classList.add('hidden'); resolve(result); }, 200);
+                };
+
+                document.getElementById('btn-confirm-cancel').onclick = () => closeAction(false);
+                document.getElementById('btn-confirm-ok').onclick = () => closeAction(true);
+            });
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.remove('hidden');
+            if(id === 'modal-news' && window.innerWidth < 768) {
+                // Special animation for news on mobile
+                setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('translate-y-full'); }, 10);
+            } else {
+                setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            
+            if(id === 'modal-news' && window.innerWidth < 768) {
+                modal.classList.add('opacity-0'); content.classList.add('translate-y-full');
+            } else {
+                modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            }
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function initPullToRefresh() {
+            let startY = 0;
+            const scrollArea = document.getElementById('main-scroll');
+            const ptr = document.getElementById('ptr-indicator');
+            
+            scrollArea.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive: true});
+            scrollArea.addEventListener('touchmove', e => {
+                const y = e.touches[0].clientY;
+                if(scrollArea.scrollTop === 0 && y > startY + 60) ptr.style.height = '40px';
+                else ptr.style.height = '0px';
+            }, {passive: true});
+            scrollArea.addEventListener('touchend', async e => {
+                if(ptr.style.height === '40px') {
+                    ptr.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span class="ml-2 text-sm">Syncing Data...</span>';
+                    lucide.createIcons();
+                    await loadUserProfile(AppState.currentUser.id); // Refresh user data
+                    await routeHandler(AppState.currentView); // Refresh view data
+                    setTimeout(() => { 
+                        ptr.style.height = '0px'; 
+                        setTimeout(() => ptr.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i><span class="ml-2 text-sm">Pull to refresh...</span>', 300);
+                    }, 500);
+                }
+            });
+        }
+
+        // ==========================================
+        // 4. ROUTER & DATA FETCHING
+        // ==========================================
+        function navTo(viewId) {
+            AppState.currentView = viewId;
+            document.querySelectorAll('.spa-view').forEach(el => el.classList.remove('active'));
+            const targetView = document.getElementById(`view-${viewId}`);
+            if(targetView) targetView.classList.add('active');
+
+            // Active State Navs
+            const viewKeyMap = { 'dashboard': 'Overview', 'news': 'News', 'tasks': 'Missions', 'rewards': 'Rewards', 'redemptions': 'Rewards', 'privileges': 'Privileges', 'directory': 'Directory', 'documents': 'Documents', 'admin': 'Management' };
+            const navText = viewKeyMap[viewId] || '';
+            
+            document.querySelectorAll('.sidebar-item, .bottom-nav-item').forEach(el => {
+                el.classList.remove('active');
+                if(el.innerText.includes(navText) || (viewId==='dashboard' && el.innerText.includes('Home'))) el.classList.add('active');
+            });
+
+            routeHandler(viewId);
+            document.getElementById('main-scroll').scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        async function routeHandler(viewId) {
+            try {
+                if(viewId === 'dashboard') await fetchDashboard();
+                if(viewId === 'news') await fetchNews();
+                if(viewId === 'tasks') await fetchTasks();
+                if(viewId === 'rewards') await fetchRewards();
+                if(viewId === 'redemptions') await fetchRedemptions();
+                if(viewId === 'privileges') await fetchPrivileges();
+                if(viewId === 'directory') await fetchDirectory();
+                if(viewId === 'documents') await fetchDocuments();
+                if(viewId === 'admin') await fetchAdminData();
+            } catch(e) {
+                console.error("View Fetch Error:", e);
+                showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
+            }
+        }
+
+        // --- DASHBOARD ---
+        async function fetchDashboard() {
+            // Load in parallel
+            const [statsRes, newsRes, lbRes, bannerRes] = await Promise.all([
+                dbClient.rpc('get_dashboard_stats'), // Placeholder if we had RPC, using direct count instead
+                dbClient.from('news').select('id, title, created_at, category').eq('is_active', true).order('created_at', {ascending: false}).limit(5),
+                dbClient.from('leaderboard').select('*').limit(5),
+                dbClient.from('banners').select('*').eq('is_active', true).order('sort_order')
+            ]);
+
+            // Fake Stats for demo if RPC not exist (Direct count)
+            const countEmps = await dbClient.from('employee_directory').select('*', {count: 'exact', head:true});
+            const countTasks = await dbClient.from('tasks').select('*', {count: 'exact', head:true}).eq('is_active', true);
+            
+            document.getElementById('stat-emps').innerText = countEmps.count || 0;
+            document.getElementById('stat-tasks').innerText = countTasks.count || 0;
+            document.getElementById('stat-news').innerText = (newsRes.data || []).length;
+            
+            // Render Banners
+            renderBanners(bannerRes.data || []);
+            // Render News List
+            renderMiniNews(newsRes.data || []);
+            // Render Leaderboard
+            renderMiniLeaderboard(lbRes.data || []);
+        }
+
+        function renderBanners(banners) {
+            const container = document.getElementById('banner-container');
+            const dots = document.getElementById('banner-dots');
+            if(!banners.length) { container.innerHTML = '<div class="w-full h-full bg-gaming-dark flex items-center justify-center text-gray-600 font-bold tracking-widest uppercase">HRD PORTAL</div>'; return; }
+            
+            container.innerHTML = banners.map(b => `<div class="w-full h-full shrink-0 relative"><img src="${b.image_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20"></div></div>`).join('');
+            dots.innerHTML = banners.map((_, i) => `<div class="w-2 h-2 rounded-full ${i===0?'bg-gaming-primary':'bg-gray-600'} transition-colors"></div>`).join('');
+            
+            // Simple auto slide logic (can be improved)
+            let currentIdx = 0;
+            if(window.bannerInterval) clearInterval(window.bannerInterval);
+            window.bannerInterval = setInterval(() => {
+                currentIdx = (currentIdx + 1) % banners.length;
+                container.style.transform = `translateX(-${currentIdx * 100}%)`;
+                Array.from(dots.children).forEach((d, i) => d.className = `w-2 h-2 rounded-full transition-colors ${i===currentIdx?'bg-gaming-primary shadow-[0_0_5px_#0ea5e9]':'bg-gray-600'}`);
+            }, 4000);
+        }
+
+        function renderMiniNews(news) {
+            const container = document.getElementById('dash-news-container');
+            if(!news.length) { container.innerHTML = '<p class="text-gray-500 text-sm">ไม่มีประกาศใหม่</p>'; return; }
+            container.innerHTML = news.map(n => `
+                <div class="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-800/50 transition cursor-pointer" onclick="openNewsDetail('${n.id}')">
+                    <div class="w-2 h-2 rounded-full bg-gaming-primary shadow-[0_0_5px_#0ea5e9]"></div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-white text-sm font-medium truncate">${n.title}</p>
+                        <p class="text-[10px] text-gray-500">${new Date(n.created_at).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMiniLeaderboard(players) {
+            const container = document.getElementById('dash-leaderboard-container');
+            if(!players.length) return;
+            container.innerHTML = players.slice(0,3).map((p, i) => {
+                let rankColor = i===0 ? 'text-yellow-400' : i===1 ? 'text-gray-300' : 'text-amber-600';
+                return `
+                <div class="flex items-center justify-between p-3 bg-gaming-card/50 rounded-xl border border-gray-800/50">
+                    <div class="flex items-center space-x-3">
+                        <span class="font-black ${rankColor} w-4">${i+1}</span>
+                        <img src="${p.avatar_url || 'https://ui-avatars.com/api/?name='+encodeURIComponent(p.full_name)+'&background=0f172a&color=fff'}" class="w-8 h-8 rounded-full border border-gray-700">
+                        <div>
+                            <p class="text-white text-xs font-bold">${p.full_name}</p>
+                            <p class="text-[9px] text-gray-500">${p.department}</p>
+                        </div>
+                    </div>
+                    <span class="text-gaming-primary font-black text-sm drop-shadow-[0_0_2px_#0ea5e9]">${p.points_balance.toLocaleString()}</span>
+                </div>`
+            }).join('');
+        }
+
+        // --- NEWS ---
+        async function fetchNews() {
+            const { data } = await dbClient.from('news').select('*').eq('is_active', true).order('created_at', {ascending: false});
+            const container = document.getElementById('news-grid');
+            if(!data || !data.length) { container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500">ไม่มีข่าวสาร</div>'; return; }
+            
+            // Store globally for detail modal
+            window.newsDataCache = data;
+
+            container.innerHTML = data.map(n => {
+                const img = n.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop';
+                const catColor = n.category === 'announcement' ? 'bg-gaming-danger text-white' : n.category === 'welfare' ? 'bg-gaming-success text-gaming-dark' : 'bg-gaming-primary text-gaming-dark';
+                return `
+                <div onclick="openNewsDetail('${n.id}')" class="glass-card rounded-3xl border border-gray-800/50 overflow-hidden group cursor-pointer hover:-translate-y-1 transition duration-300 flex flex-col h-full hover:shadow-[0_10px_30px_rgba(14,165,233,0.1)]">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" loading="lazy">
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-card to-transparent opacity-80"></div>
+                        <span class="absolute top-3 left-3 ${catColor} text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-lg">${n.category}</span>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col relative -mt-6">
+                        <h3 class="font-bold text-lg text-white mb-2 leading-tight group-hover:text-gaming-primary transition">${n.title}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2 mb-4 font-light">${n.content}</p>
+                        <div class="mt-auto flex items-center text-[10px] text-gray-500 uppercase tracking-widest">
+                            <i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${new Date(n.created_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>`
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openNewsDetail(id) {
+            const news = window.newsDataCache?.find(n => n.id === id);
+            if(!news) return;
+            
+            document.getElementById('news-detail-title').innerText = news.title;
+            document.getElementById('news-detail-content').innerText = news.content;
+            document.getElementById('news-detail-cat').innerText = news.category;
+            document.getElementById('news-detail-date').innerText = new Date(news.created_at).toLocaleString();
+            
+            const imgEl = document.getElementById('news-detail-img');
+            if(news.image_url) { imgEl.src = news.image_url; imgEl.style.display = 'block'; } 
+            else { imgEl.style.display = 'none'; }
+            
+            openModal('modal-news');
+        }
+
+        // --- TASKS ---
+        async function fetchTasks() {
+            // Get Tasks and user's submissions
+            const [tasksRes, subRes] = await Promise.all([
+                dbClient.from('tasks').select('*').eq('is_active', true).order('created_at', {ascending: false}),
+                dbClient.from('task_submissions').select('task_id, status').eq('employee_id', AppState.currentUser.id).gte('created_at', new Date().toISOString().split('T')[0]) // Check today only
+            ]);
+
+            const tasks = tasksRes.data || [];
+            const subs = subRes.data || [];
+            const subMap = subs.reduce((acc, curr) => { acc[curr.task_id] = curr.status; return acc; }, {});
+
+            const container = document.getElementById('tasks-grid');
+            if(!tasks.length) { container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500">ไม่มีภารกิจในขณะนี้</div>'; return; }
+
+            container.innerHTML = tasks.map(t => {
+                const status = subMap[t.id];
+                const isDone = !!status;
+                const statusHtml = status === 'approved' ? '<span class="text-gaming-success"><i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>Approved</span>' : 
+                                   status === 'pending' ? '<span class="text-gaming-warning"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i>Pending</span>' : '';
+                
+                const img = t.image_url || 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop';
+                
+                return `
+                <div class="glass-card rounded-3xl border border-gray-800/80 overflow-hidden flex flex-col relative group ${isDone?'opacity-75 grayscale-[30%]':''}">
+                    ${isDone ? `<div class="absolute inset-0 bg-gaming-dark/60 z-10 flex flex-col items-center justify-center backdrop-blur-[2px]"><div class="bg-gaming-card border border-gray-700 px-4 py-2 rounded-xl font-bold shadow-xl flex items-center space-x-2 text-sm">${statusHtml}</div></div>` : ''}
+                    <div class="h-32 overflow-hidden relative">
+                        <img src="${img}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-gaming-card to-transparent"></div>
+                        <div class="absolute top-0 right-0 bg-gaming-accent text-white font-black text-lg px-3 py-2 rounded-bl-2xl shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+                            +${t.points_reward} <span class="text-[10px] font-normal uppercase block -mt-1 opacity-80">Points</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col relative z-0">
+                        <span class="text-[9px] text-gaming-accent font-bold uppercase tracking-widest border border-gaming-accent/30 rounded px-1.5 py-0.5 inline-block mb-2 w-max">${t.task_type} MISSION</span>
+                        <h3 class="font-bold text-white mb-2 leading-tight">${t.title}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2 mb-4">${t.description}</p>
+                        <button onclick="openUploadModal('${t.id}', '${t.title.replace(/'/g,"\\'")}')" class="mt-auto w-full py-3 rounded-xl font-bold text-xs bg-gaming-dark border border-gray-700 text-white hover:border-gaming-primary hover:text-gaming-primary transition group-hover:shadow-[0_0_15px_rgba(14,165,233,0.2)]">
+                            SEND REPORT
+                        </button>
+                    </div>
+                </div>`
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Upload Logic
+        function openUploadModal(taskId, title) {
+            document.getElementById('active-task-id').value = taskId;
+            document.getElementById('modal-task-title').innerText = title;
+            removeTaskImage(); // reset
+            openModal('modal-task');
+        }
+
+        function handleTaskImageSelect(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            if(file.size > 5 * 1024 * 1024) { showToast('ไฟล์ขนาดเกิน 5MB', 'error'); return; }
+            
+            AppState.selectedTaskFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('img-preview-src').src = e.target.result;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('upload-box').classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function removeTaskImage() {
+            AppState.selectedTaskFile = null;
+            document.getElementById('task-image').value = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('upload-box').classList.remove('hidden');
+        }
+
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        let scale = 1;
+                        if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+                        canvas.width = img.width * scale; canvas.height = img.height * scale;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function submitTask() {
+            if(!AppState.selectedTaskFile) { showToast('กรุณาอัปโหลดรูปภาพ', 'warning'); return; }
+            if(AppState.isSubmitting) return;
+            
+            const btn = document.getElementById('btn-submit-task');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
+            btn.disabled = true;
+            AppState.isSubmitting = true;
+
+            try {
+                // 1. Compress
+                const compressedBlob = await compressImage(AppState.selectedTaskFile);
+                const fileName = `task_${AppState.currentUser.emp_code}_${Date.now()}.jpg`;
+
+                // 2. Upload Storage
+                const { error: uploadErr } = await dbClient.storage.from('hrd-portal-media').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+                if(uploadErr) throw uploadErr;
+
+                const { data: { publicUrl } } = dbClient.storage.from('hrd-portal-media').getPublicUrl(fileName);
+
+                // 3. Insert Database
+                const taskId = document.getElementById('active-task-id').value;
+                const { error: dbErr } = await dbClient.from('task_submissions').insert([{
+                    task_id: taskId,
+                    employee_id: AppState.currentUser.id,
+                    proof_image_url: publicUrl
+                }]);
+                if(dbErr) throw dbErr;
+
+                showToast('ส่งภารกิจสำเร็จ! รอการตรวจสอบ', 'success');
+                closeModal('modal-task');
+                fetchTasks(); // Reload
+            } catch(e) {
+                showToast('เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+            } finally {
+                AppState.isSubmitting = false;
+                btn.disabled = false;
+                btn.innerHTML = 'SUBMIT PROOF';
+                lucide.createIcons();
+            }
+        }
+
+        // --- REWARDS ---
+        async function fetchRewards() {
+            const { data } = await dbClient.from('rewards').select('*').eq('is_active', true).order('points_cost', {ascending: true});
+            const container = document.getElementById('rewards-grid');
+            if(!data || !data.length) { container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500">ไม่มีของรางวัล</div>'; return; }
+
+            const userPts = AppState.currentUser.points_balance;
+
+            container.innerHTML = data.map(r => {
+                const canAfford = userPts >= r.points_cost;
+                const isOut = r.stock <= 0;
+                const img = r.image_url || 'https://placehold.co/600x400/162032/f59e0b?text=REWARD';
+                
+                return `
+                <div class="glass-card rounded-3xl border border-gray-800/80 overflow-hidden flex flex-col relative group ${isOut ? 'grayscale opacity-70' : 'hover:border-gaming-warning/50 hover:shadow-[0_10px_30px_rgba(245,158,11,0.15)] transition duration-300'}">
+                    <div class="absolute top-3 left-3 bg-gaming-dark/80 backdrop-blur rounded px-2 py-1 text-[10px] font-bold z-10 border border-gray-700 ${isOut ? 'text-gaming-danger' : 'text-gaming-success'}">
+                        ${isOut ? 'SOLD OUT' : `STOCK: ${r.stock}`}
+                    </div>
+                    <div class="h-48 overflow-hidden relative p-4">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gaming-card opacity-50 z-0"></div>
+                        <img src="${img}" class="w-full h-full object-contain relative z-10 group-hover:scale-110 transition duration-500 drop-shadow-2xl" loading="lazy">
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col relative z-10 bg-gradient-to-t from-gaming-card to-transparent">
+                        <h3 class="font-bold text-white mb-1 line-clamp-1">${r.name}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2 mb-4 flex-1">${r.description || ''}</p>
+                        
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-gaming-warning font-black text-xl drop-shadow-[0_0_5px_#f59e0b]"><i data-lucide="zap" class="w-4 h-4 inline pb-0.5"></i> ${r.points_cost.toLocaleString()}</span>
+                        </div>
+                        
+                        <button onclick="confirmRedeem('${r.id}', ${r.points_cost}, '${r.name.replace(/'/g,"\\'")}')" 
+                            ${!canAfford || isOut ? 'disabled' : ''} 
+                            class="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition 
+                            ${isOut ? 'bg-gray-800 text-gray-500' : 
+                              canAfford ? 'bg-gaming-warning text-gaming-dark hover:bg-yellow-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 
+                              'bg-gaming-dark border border-gaming-danger/50 text-gaming-danger'}">
+                            ${isOut ? 'สินค้าหมด' : canAfford ? 'REDEEM' : 'แต้มไม่พอ'}
+                        </button>
+                    </div>
+                </div>`
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function confirmRedeem(rewardId, cost, name) {
+            const ok = await showConfirm('ยืนยันการแลกรางวัล', `คุณต้องการใช้ ${cost.toLocaleString()} Pts เพื่อแลก "${name}" ใช่หรือไม่?`);
+            if(!ok) return;
+
+            showLoader('PROCESSING TRANSACTION...');
+            try {
+                // Call RPC Transaction
+                const { error } = await dbClient.rpc('redeem_reward_txn', { p_emp_id: AppState.currentUser.id, p_reward_id: rewardId });
+                if(error) {
+                    if(error.message.includes('คะแนนไม่เพียงพอ')) throw new Error('คะแนนไม่เพียงพอ');
+                    if(error.message.includes('สินค้าหมด')) throw new Error('สินค้าหมดแล้ว');
+                    throw error;
+                }
+                
+                showToast('แลกรางวัลสำเร็จ! กรุณาตรวจสอบ QR Code ในหน้า My Rewards', 'success');
+                // Refresh App State
+                await loadUserProfile(AppState.currentUser.id);
+                fetchRewards();
+                
+                // Switch to redemptions tab to show QR
+                setTimeout(() => navTo('redemptions'), 1500);
+
+            } catch(e) {
+                showToast(e.message || 'เกิดข้อผิดพลาดในการทำรายการ', 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // --- MY REDEMPTIONS (History & QR) ---
+        async function fetchRedemptions() {
+            const { data } = await dbClient.from('redemptions')
+                .select(`id, status, created_at, qr_code_val, rewards(name, image_url)`)
+                .eq('employee_id', AppState.currentUser.id)
+                .order('created_at', {ascending: false});
+            
+            const container = document.getElementById('redemptions-list');
+            if(!data || !data.length) { container.innerHTML = '<div class="glass-card p-8 text-center rounded-2xl border-dashed border-2 border-gray-700 text-gray-500">ไม่มีประวัติการแลกของรางวัล</div>'; return; }
+
+            container.innerHTML = data.map(item => {
+                const r = item.rewards;
+                const date = new Date(item.created_at).toLocaleString('th-TH');
+                const img = r.image_url || 'https://placehold.co/100x100/162032/f59e0b?text=RWD';
+                
+                return `
+                <div class="glass-card p-4 rounded-2xl border border-gray-800/80 flex items-center space-x-4">
+                    <img src="${img}" class="w-16 h-16 rounded-xl object-cover bg-gaming-dark">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-white text-sm line-clamp-1">${r.name}</h4>
+                        <p class="text-[10px] text-gray-500">แลกเมื่อ: ${date}</p>
+                        <span class="text-[9px] bg-gaming-success/20 text-gaming-success border border-gaming-success/30 px-2 py-0.5 rounded mt-1 inline-block uppercase tracking-widest">${item.status}</span>
+                    </div>
+                    <button onclick="showQRCode('${item.qr_code_val}', '${r.name.replace(/'/g,"\\'")}')" class="w-12 h-12 bg-gaming-dark border border-gaming-primary/50 rounded-xl flex items-center justify-center text-gaming-primary hover:bg-gaming-primary hover:text-white transition shadow-[0_0_10px_rgba(14,165,233,0.2)]">
+                        <i data-lucide="qr-code" class="w-6 h-6"></i>
+                    </button>
+                </div>`
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function showQRCode(val, name) {
+            document.getElementById('qr-reward-name').innerText = name;
+            document.getElementById('qr-ref-code').innerText = 'REF: ' + val.substring(0,8).toUpperCase();
+            
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ''; // clear old
+            new QRCode(qrContainer, {
+                text: val, width: 200, height: 200,
+                colorDark : "#0b1120", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
+            });
+            
+            openModal('modal-qr');
+        }
+
+        // --- DIRECTORY ---
+        async function fetchDirectory() {
+            if(!AppState.employees.length) {
+                const { data } = await dbClient.from('employee_directory').select('*').eq('is_active', true).order('emp_code');
+                AppState.employees = data || [];
+            }
+            renderDirectory(AppState.employees);
+        }
+
+        function renderDirectory(data) {
+            const tbody = document.getElementById('directory-table');
+            if(!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">ไม่พบข้อมูล</td></tr>'; return; }
+            
+            tbody.innerHTML = data.map(e => `
+                <tr class="hover:bg-gaming-card/50 transition">
+                    <td class="p-4">
+                        <img src="${e.avatar_url || 'https://ui-avatars.com/api/?name='+encodeURIComponent(e.full_name)+'&background=0f172a&color=fff'}" class="w-10 h-10 rounded-full border border-gray-700" loading="lazy">
+                    </td>
+                    <td class="p-4 text-xs font-mono text-gray-400">${e.emp_code}</td>
+                    <td class="p-4">
+                        <p class="font-bold text-white text-sm">${e.full_name}</p>
+                        <p class="text-[10px] text-gaming-primary">${e.department}</p>
+                    </td>
+                    <td class="p-4 text-xs text-gray-300">${e.position}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterDirectory() {
+            const term = document.getElementById('search-emp').value.toLowerCase();
+            const filtered = AppState.employees.filter(e => 
+                e.full_name.toLowerCase().includes(term) || 
+                e.emp_code.toLowerCase().includes(term) || 
+                e.department.toLowerCase().includes(term)
+            );
+            renderDirectory(filtered);
+        }
+
+        // --- DOCUMENTS & PRIVILEGES (Simple renders) ---
+        async function fetchDocuments() {
+            const { data } = await dbClient.from('documents').select('*').order('created_at', {ascending: false});
+            const container = document.getElementById('docs-grid');
+            if(!data) return;
+            
+            container.innerHTML = data.map(d => `
+                <a href="${d.file_url}" target="_blank" class="glass-card p-5 rounded-2xl border border-gray-800 flex items-start space-x-4 hover:border-gaming-primary hover:bg-gaming-card transition group">
+                    <div class="p-3 bg-gaming-dark rounded-xl text-gaming-primary group-hover:bg-gaming-primary group-hover:text-white transition"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm mb-1">${d.title}</h4>
+                        <span class="text-[9px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase tracking-widest">${d.category}</span>
+                    </div>
+                </a>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function fetchPrivileges() {
+            const { data } = await dbClient.from('privileges').select('*').eq('is_active', true);
+            const container = document.getElementById('privileges-grid');
+            if(!data) return;
+
+            container.innerHTML = data.map(p => {
+                const img = p.image_url || 'https://placehold.co/600x300/162032/ec4899?text=PROMO';
+                return `
+                <div class="glass-card rounded-3xl border border-[#ec4899]/30 overflow-hidden relative shadow-[0_0_15px_rgba(236,72,153,0.1)]">
+                    <div class="h-40 overflow-hidden"><img src="${img}" class="w-full h-full object-cover" loading="lazy"></div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-white text-lg mb-2 leading-tight">${p.title}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2 mb-4">${p.description}</p>
+                        <div class="bg-gaming-dark border border-gray-700 p-3 rounded-xl flex justify-between items-center text-sm font-mono">
+                            <span class="text-white tracking-widest">${p.promo_code}</span>
+                            <button onclick="navigator.clipboard.writeText('${p.promo_code}'); showToast('Copied!', 'success')" class="text-[#ec4899] hover:text-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>`
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // --- ADMIN ZONE (Mockup/Simplified) ---
+        async function fetchAdminData() {
+            // Load pending tasks
+            const { data: pending } = await dbClient.from('task_submissions').select(`id, created_at, proof_image_url, tasks(title, points_reward), employee_directory(full_name)`).eq('status', 'pending');
+            
+            document.getElementById('pending-task-count').innerText = pending?.length || 0;
+            
+            const container = document.getElementById('admin-pending-tasks');
+            if(!pending || !pending.length) { container.innerHTML = '<p class="text-sm text-gray-500 text-center py-10">All clear! No pending tasks.</p>'; }
+            else {
+                container.innerHTML = pending.map(sub => `
+                    <div class="p-4 bg-gaming-dark/50 rounded-xl border border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <a href="${sub.proof_image_url}" target="_blank" class="shrink-0"><img src="${sub.proof_image_url}" class="w-12 h-12 rounded object-cover border border-gray-700 hover:border-gaming-primary transition"></a>
+                            <div>
+                                <p class="text-xs text-gaming-primary font-bold">Mission: ${sub.tasks.title} (+${sub.tasks.points_reward})</p>
+                                <p class="text-sm text-white font-medium">${sub.employee_directory.full_name}</p>
+                                <p class="text-[9px] text-gray-500">${new Date(sub.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 w-full md:w-auto">
+                            <button onclick="approveTask('${sub.id}')" class="flex-1 md:flex-none px-4 py-2 bg-gaming-success/20 text-gaming-success border border-gaming-success/50 rounded-lg text-xs font-bold hover:bg-gaming-success hover:text-white transition">APPROVE</button>
+                            <button onclick="rejectTask('${sub.id}')" class="flex-1 md:flex-none px-4 py-2 bg-gaming-danger/20 text-gaming-danger border border-gaming-danger/50 rounded-lg text-xs font-bold hover:bg-gaming-danger hover:text-white transition">REJECT</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Simple Chart mock
+            const ctx = document.getElementById('adminChartPoints').getContext('2d');
+            if(window.adminChart) window.adminChart.destroy();
+            window.adminChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets: [{ label: 'Pts Distributed', data: [1500,2200,800,3100,1200,500,0], backgroundColor: '#0ea5e9', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{display:false} }, scales: { x:{grid:{display:false}}, y:{grid:{color:'#1e293b'}} } }
+            });
+        }
+
+        async function approveTask(id) {
+            showLoader();
+            try {
+                // Call RPC to approve and give points safely
+                const { error } = await dbClient.rpc('approve_task_txn', { p_submission_id: id });
+                if(error) throw error;
+                showToast('Approved task successfully', 'success');
+                fetchAdminData(); // Reload
+            } catch(e) { showToast(e.message, 'error'); } finally { hideLoader(); }
+        }
+        
+        async function rejectTask(id) {
+            showLoader();
+            try {
+                const { error } = await dbClient.from('task_submissions').update({status: 'rejected'}).eq('id', id);
+                if(error) throw error;
+                showToast('Task rejected', 'info');
+                fetchAdminData();
+            } catch(e) { showToast('Error', 'error'); } finally { hideLoader(); }
+        }
+
+        function simulateSync() {
+            showLoader('SYNCING FROM GOOGLE SHEET...');
+            setTimeout(() => {
+                hideLoader();
+                showToast('Synced data from Google Sheet successfully!', 'success');
+                // Note: In real life, this button would trigger a Make.com webhook which updates Supabase.
+            }, 2000);
+        }
+
+    </script>
+</body>
+</html>
