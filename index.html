@@ -317,11 +317,26 @@
                 
                 <!-- Category Filter (Horizontal Scroll) -->
                 <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="news-filter-container">
-                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-primary text-gaming-dark shadow-[0_0_10px_rgba(14,165,233,0.3)] whitespace-nowrap">ALL NEWS</button>
-                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">ANNOUNCEMENT</button>
-                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">ACTIVITY</button>
-                    <button class="px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 hover:text-white whitespace-nowrap">WELFARE</button>
-                </div>
+    <button onclick="filterNews('all', this)"
+        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-primary text-gaming-dark whitespace-nowrap">
+        ALL NEWS
+    </button>
+
+    <button onclick="filterNews('announcement', this)"
+        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+        ANNOUNCEMENT
+    </button>
+
+    <button onclick="filterNews('activity', this)"
+        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+        ACTIVITY
+    </button>
+
+    <button onclick="filterNews('welfare', this)"
+        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+        WELFARE
+    </button>
+</div>
 
                 <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Populated by JS -->
@@ -955,7 +970,84 @@
             }).join('');
             lucide.createIcons();
         }
+function filterNews(category, btn) {
 
+    let filtered = window.newsDataCache || [];
+
+    if (category !== 'all') {
+        filtered = filtered.filter(
+            n => n.category === category
+        );
+    }
+
+    renderFilteredNews(filtered);
+
+    // reset ทุกปุ่ม
+    document.querySelectorAll('.news-filter-btn')
+    .forEach(b => {
+
+        b.classList.remove(
+            'bg-gaming-primary',
+            'text-gaming-dark'
+        );
+
+        b.classList.add(
+            'bg-gaming-dark',
+            'text-gray-400',
+            'border',
+            'border-gray-700'
+        );
+    });
+
+    // ปุ่มที่กด
+    btn.classList.remove(
+        'bg-gaming-dark',
+        'text-gray-400',
+        'border',
+        'border-gray-700'
+    );
+
+    btn.classList.add(
+        'bg-gaming-primary',
+        'text-gaming-dark'
+    );
+}
+
+function renderFilteredNews(data) {
+
+    const container =
+    document.getElementById('news-grid');
+
+    container.innerHTML = data.map(n => {
+
+        const img =
+        n.image_url ||
+        'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop';
+
+        return `
+        <div onclick="openNewsDetail('${n.id}')"
+            class="glass-card rounded-3xl border border-gray-800/50 overflow-hidden group cursor-pointer">
+
+            <div class="h-48 overflow-hidden">
+                <img src="${img}"
+                    class="w-full h-full object-cover">
+            </div>
+
+            <div class="p-5">
+                <h3 class="font-bold text-lg text-white mb-2">
+                    ${n.title}
+                </h3>
+
+                <p class="text-xs text-gray-400 line-clamp-2">
+                    ${n.content}
+                </p>
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    lucide.createIcons();
+}
         function openNewsDetail(id) {
             const news = window.newsDataCache?.find(n => n.id === id);
             if(!news) return;
