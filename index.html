@@ -197,7 +197,7 @@
         </nav>
         
         <div class="p-6 border-t border-gray-800/50">
-            <button onclick="location.reload()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium text-sm">
+            <button onclick="logoutSession()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium text-sm">
                 <i data-lucide="log-out" class="w-4 h-4"></i><span>Switch Profile</span>
             </button>
         </div>
@@ -224,7 +224,7 @@
                     <i data-lucide="zap" class="text-gaming-warning w-3.5 h-3.5 mr-1.5"></i>
                     <span id="mobile-points" class="text-sm font-bold text-white">0</span>
                 </div>
-                <img id="mobile-avatar" src="" class="w-8 h-8 rounded-full border border-gaming-primary object-cover cursor-pointer" onclick="location.reload()">
+                <img id="mobile-avatar" src="" class="w-8 h-8 rounded-full border border-gaming-primary object-cover cursor-pointer" onclick="logoutSession()">
             </div>
         </header>
 
@@ -1374,7 +1374,10 @@
                 // Note: In real life, this button would trigger a Make.com webhook which updates Supabase.
             }, 2000);
         }
-
+ function logoutSession() {
+            localStorage.removeItem('hrd_mock_session');
+            location.reload();
+        }
     </script>
 </body>
 </html>
