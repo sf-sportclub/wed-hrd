@@ -1129,6 +1129,9 @@
                         ${isOut ? 'SOLD OUT' : `STOCK: ${r.stock}`}
                     </div>
                     <div class="h-48 overflow-hidden relative p-4">
+ <div class="absolute top-3 left-3 z-20 bg-emerald-500 text-black text-xs font-bold px-2 py-1 rounded">
+        STOCK: ${r.stock}
+    </div>
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gaming-card opacity-50 z-0"></div>
                         <img src="${img}" class="w-full h-full object-contain relative z-10 group-hover:scale-110 transition duration-500 drop-shadow-2xl" loading="lazy">
                     </div>
