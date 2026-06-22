@@ -317,26 +317,26 @@
                 
                 <!-- Category Filter (Horizontal Scroll) -->
                 <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="news-filter-container">
-    <button onclick="filterNews('all', this)"
-        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-primary text-gaming-dark whitespace-nowrap">
-        ALL NEWS
-    </button>
+                    <button onclick="filterNews('all', this)"
+                        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-primary text-gaming-dark whitespace-nowrap">
+                        ALL NEWS
+                    </button>
 
-    <button onclick="filterNews('announcement', this)"
-        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
-        ANNOUNCEMENT
-    </button>
+                    <button onclick="filterNews('announcement', this)"
+                        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+                        ANNOUNCEMENT
+                    </button>
 
-    <button onclick="filterNews('activity', this)"
-        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
-        ACTIVITY
-    </button>
+                    <button onclick="filterNews('activity', this)"
+                        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+                        ACTIVITY
+                    </button>
 
-    <button onclick="filterNews('welfare', this)"
-        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
-        WELFARE
-    </button>
-</div>
+                    <button onclick="filterNews('welfare', this)"
+                        class="news-filter-btn px-5 py-2 rounded-full text-xs font-bold tracking-wider bg-gaming-dark border border-gray-700 text-gray-400 whitespace-nowrap">
+                        WELFARE
+                    </button>
+                </div>
 
                 <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Populated by JS -->
@@ -518,29 +518,39 @@
 
     <!-- Submit Task Modal -->
     <div id="modal-task" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="glass-card border border-gaming-primary/50 rounded-3xl shadow-[0_0_40px_rgba(14,165,233,0.2)] w-full max-w-md p-6 md:p-8 relative transform scale-95 transition-transform duration-300" id="modal-task-content">
+        <div class="glass-card border border-gaming-primary/50 rounded-3xl shadow-[0_0_40px_rgba(14,165,233,0.2)] w-full max-w-md p-6 md:p-8 relative transform scale-95 transition-transform duration-300 max-h-screen overflow-y-auto no-scrollbar" id="modal-task-content">
             <button onclick="closeModal('modal-task')" class="absolute top-5 right-5 text-gray-500 hover:text-white bg-gaming-dark p-2 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             <div class="w-12 h-12 bg-gaming-primary/10 rounded-2xl flex items-center justify-center mb-4 border border-gaming-primary/30">
                 <i data-lucide="upload-cloud" class="w-6 h-6 text-gaming-primary"></i>
             </div>
             <h3 class="text-2xl font-black mb-1 text-white tracking-wide" id="modal-task-title">Mission Report</h3>
-            <p class="text-sm text-gray-400 mb-6">อัปโหลดรูปภาพเพื่อยืนยันการทำภารกิจของคุณ</p>
+            <p class="text-sm text-gray-400 mb-6">อัปโหลดรูปภาพและ/หรือกรอกข้อมูลเพื่อยืนยันการทำภารกิจ</p>
             
             <div class="space-y-5">
-                <div id="image-preview" class="hidden w-full aspect-video rounded-xl border border-gray-700 overflow-hidden relative group">
-                    <img id="img-preview-src" src="" class="w-full h-full object-cover">
-                    <button onclick="removeTaskImage()" class="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-gaming-danger transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <!-- Text Input Area -->
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-widest">รายละเอียด (ถ้ามี)</label>
+                    <textarea id="task-note" rows="3" class="w-full bg-gaming-dark/80 border border-gray-700 text-white text-sm rounded-xl focus:ring-gaming-primary focus:border-gaming-primary block p-3.5 outline-none resize-none transition-colors" placeholder="พิมพ์ข้อความรายละเอียดการทำภารกิจของคุณที่นี่..."></textarea>
                 </div>
-                
-                <div id="upload-box" class="border-2 border-dashed border-gray-600 rounded-2xl p-8 text-center hover:border-gaming-primary hover:bg-gaming-primary/5 transition-colors cursor-pointer" onclick="document.getElementById('task-image').click()">
-                    <input type="file" id="task-image" accept="image/*" class="hidden" onchange="handleTaskImageSelect(event)">
-                    <i data-lucide="image-plus" class="w-10 h-10 text-gray-500 mx-auto mb-3"></i>
-                    <span class="text-sm font-bold text-gray-300 block mb-1">Tap to select photo</span>
-                    <span class="text-xs text-gray-500 block">JPG, PNG (Max 5MB)</span>
-                    <span class="text-[10px] text-gaming-primary block mt-2">* บีบอัดอัตโนมัติก่อนอัปโหลด</span>
+
+                <!-- Image Upload Area -->
+                <div>
+                    <label id="task-image-label" class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-widest">รูปภาพหลักฐาน <span class="text-gray-500">(ไม่บังคับ)</span></label>
+                    <div id="image-preview" class="hidden w-full aspect-video rounded-xl border border-gray-700 overflow-hidden relative group">
+                        <img id="img-preview-src" src="" class="w-full h-full object-cover">
+                        <button onclick="removeTaskImage()" class="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full hover:bg-gaming-danger transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    
+                    <div id="upload-box" class="border-2 border-dashed border-gray-600 rounded-2xl p-6 text-center hover:border-gaming-primary hover:bg-gaming-primary/5 transition-colors cursor-pointer" onclick="document.getElementById('task-image').click()">
+                        <input type="file" id="task-image" accept="image/*" class="hidden" onchange="handleTaskImageSelect(event)">
+                        <i data-lucide="image-plus" class="w-8 h-8 text-gray-500 mx-auto mb-2"></i>
+                        <span class="text-sm font-bold text-gray-300 block mb-1">แตะเพื่อเลือกรูปภาพ</span>
+                        <span class="text-xs text-gray-500 block">JPG, PNG (Max 5MB)</span>
+                    </div>
                 </div>
                 
                 <input type="hidden" id="active-task-id">
+                <input type="hidden" id="active-task-require-image">
                 <button id="btn-submit-task" onclick="submitTask()" class="w-full bg-gradient-to-r from-gaming-primary to-gaming-accent text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition shadow-[0_0_15px_rgba(14,165,233,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
                     SUBMIT PROOF
                 </button>
@@ -605,7 +615,6 @@
         // ==========================================
         // 1. SUPABASE INIT & APP STATE
         // ==========================================
-        // ใส่ URL และ Key ของโปรเจกต์คุณ (ตัวแปรบังคับใช้ dbClient)
         const SUPABASE_URL = 'https://udmisytsnslvzlvdddjz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_7tEis15mzdojOTJnB81XlQ_4HyMrI9Z';
         
@@ -613,7 +622,7 @@
         const AppState = {
             currentUser: null,
             currentView: '',
-            employees: [], // Cache for directory
+            employees: [], 
             selectedTaskFile: null,
             isSubmitting: false
         };
@@ -640,7 +649,6 @@
         });
 
         async function checkMockSession() {
-            // ระบบจำลอง Session ดึงรายชื่อพนักงานมาให้เลือก
             const savedEmpId = localStorage.getItem('hrd_mock_session');
             
             if (savedEmpId) {
@@ -779,7 +787,6 @@
             const content = document.getElementById(id + '-content');
             modal.classList.remove('hidden');
             if(id === 'modal-news' && window.innerWidth < 768) {
-                // Special animation for news on mobile
                 setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('translate-y-full'); }, 10);
             } else {
                 setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
@@ -832,7 +839,6 @@
             const targetView = document.getElementById(`view-${viewId}`);
             if(targetView) targetView.classList.add('active');
 
-            // Active State Navs
             const viewKeyMap = { 'dashboard': 'Overview', 'news': 'News', 'tasks': 'Missions', 'rewards': 'Rewards', 'redemptions': 'Rewards', 'privileges': 'Privileges', 'directory': 'Directory', 'documents': 'Documents', 'admin': 'Management' };
             const navText = viewKeyMap[viewId] || '';
             
@@ -864,15 +870,13 @@
 
         // --- DASHBOARD ---
         async function fetchDashboard() {
-            // Load in parallel
             const [statsRes, newsRes, lbRes, bannerRes] = await Promise.all([
-                dbClient.rpc('get_dashboard_stats'), // Placeholder if we had RPC, using direct count instead
+                dbClient.rpc('get_dashboard_stats'), 
                 dbClient.from('news').select('id, title, created_at, category').eq('is_active', true).order('created_at', {ascending: false}).limit(5),
                 dbClient.from('leaderboard').select('*').limit(5),
                 dbClient.from('banners').select('*').eq('is_active', true).order('sort_order')
             ]);
 
-            // Fake Stats for demo if RPC not exist (Direct count)
             const countEmps = await dbClient.from('employee_directory').select('*', {count: 'exact', head:true});
             const countTasks = await dbClient.from('tasks').select('*', {count: 'exact', head:true}).eq('is_active', true);
             
@@ -880,11 +884,8 @@
             document.getElementById('stat-tasks').innerText = countTasks.count || 0;
             document.getElementById('stat-news').innerText = (newsRes.data || []).length;
             
-            // Render Banners
             renderBanners(bannerRes.data || []);
-            // Render News List
             renderMiniNews(newsRes.data || []);
-            // Render Leaderboard
             renderMiniLeaderboard(lbRes.data || []);
         }
 
@@ -896,7 +897,6 @@
             container.innerHTML = banners.map(b => `<div class="w-full h-full shrink-0 relative"><img src="${b.image_url}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/20"></div></div>`).join('');
             dots.innerHTML = banners.map((_, i) => `<div class="w-2 h-2 rounded-full ${i===0?'bg-gaming-primary':'bg-gray-600'} transition-colors"></div>`).join('');
             
-            // Simple auto slide logic (can be improved)
             let currentIdx = 0;
             if(window.bannerInterval) clearInterval(window.bannerInterval);
             window.bannerInterval = setInterval(() => {
@@ -946,7 +946,6 @@
             const container = document.getElementById('news-grid');
             if(!data || !data.length) { container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500">ไม่มีข่าวสาร</div>'; return; }
             
-            // Store globally for detail modal
             window.newsDataCache = data;
 
             container.innerHTML = data.map(n => {
@@ -970,84 +969,38 @@
             }).join('');
             lucide.createIcons();
         }
-function filterNews(category, btn) {
 
-    let filtered = window.newsDataCache || [];
+        function filterNews(category, btn) {
+            let filtered = window.newsDataCache || [];
+            if (category !== 'all') {
+                filtered = filtered.filter(n => n.category === category);
+            }
+            renderFilteredNews(filtered);
 
-    if (category !== 'all') {
-        filtered = filtered.filter(
-            n => n.category === category
-        );
-    }
+            document.querySelectorAll('.news-filter-btn').forEach(b => {
+                b.classList.remove('bg-gaming-primary', 'text-gaming-dark');
+                b.classList.add('bg-gaming-dark', 'text-gray-400', 'border', 'border-gray-700');
+            });
+            btn.classList.remove('bg-gaming-dark', 'text-gray-400', 'border', 'border-gray-700');
+            btn.classList.add('bg-gaming-primary', 'text-gaming-dark');
+        }
 
-    renderFilteredNews(filtered);
+        function renderFilteredNews(data) {
+            const container = document.getElementById('news-grid');
+            container.innerHTML = data.map(n => {
+                const img = n.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop';
+                return `
+                <div onclick="openNewsDetail('${n.id}')" class="glass-card rounded-3xl border border-gray-800/50 overflow-hidden group cursor-pointer">
+                    <div class="h-48 overflow-hidden"><img src="${img}" class="w-full h-full object-cover"></div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-lg text-white mb-2">${n.title}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2">${n.content}</p>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
 
-    // reset ทุกปุ่ม
-    document.querySelectorAll('.news-filter-btn')
-    .forEach(b => {
-
-        b.classList.remove(
-            'bg-gaming-primary',
-            'text-gaming-dark'
-        );
-
-        b.classList.add(
-            'bg-gaming-dark',
-            'text-gray-400',
-            'border',
-            'border-gray-700'
-        );
-    });
-
-    // ปุ่มที่กด
-    btn.classList.remove(
-        'bg-gaming-dark',
-        'text-gray-400',
-        'border',
-        'border-gray-700'
-    );
-
-    btn.classList.add(
-        'bg-gaming-primary',
-        'text-gaming-dark'
-    );
-}
-
-function renderFilteredNews(data) {
-
-    const container =
-    document.getElementById('news-grid');
-
-    container.innerHTML = data.map(n => {
-
-        const img =
-        n.image_url ||
-        'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop';
-
-        return `
-        <div onclick="openNewsDetail('${n.id}')"
-            class="glass-card rounded-3xl border border-gray-800/50 overflow-hidden group cursor-pointer">
-
-            <div class="h-48 overflow-hidden">
-                <img src="${img}"
-                    class="w-full h-full object-cover">
-            </div>
-
-            <div class="p-5">
-                <h3 class="font-bold text-lg text-white mb-2">
-                    ${n.title}
-                </h3>
-
-                <p class="text-xs text-gray-400 line-clamp-2">
-                    ${n.content}
-                </p>
-            </div>
-        </div>
-        `;
-    }).join('');
-
-    lucide.createIcons();
-}
         function openNewsDetail(id) {
             const news = window.newsDataCache?.find(n => n.id === id);
             if(!news) return;
@@ -1066,10 +1019,9 @@ function renderFilteredNews(data) {
 
         // --- TASKS ---
         async function fetchTasks() {
-            // Get Tasks and user's submissions
             const [tasksRes, subRes] = await Promise.all([
                 dbClient.from('tasks').select('*').eq('is_active', true).order('created_at', {ascending: false}),
-                dbClient.from('task_submissions').select('task_id, status').eq('employee_id', AppState.currentUser.id).gte('created_at', new Date().toISOString().split('T')[0]) // Check today only
+                dbClient.from('task_submissions').select('task_id, status').eq('employee_id', AppState.currentUser.id).gte('created_at', new Date().toISOString().split('T')[0])
             ]);
 
             const tasks = tasksRes.data || [];
@@ -1086,6 +1038,8 @@ function renderFilteredNews(data) {
                                    status === 'pending' ? '<span class="text-gaming-warning"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i>Pending</span>' : '';
                 
                 const img = t.image_url || 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop';
+                // เช็คว่าใน DB มีคอลัมน์ require_image และถูกเซ็ตไว้ให้เป็น true ไหม ถ้าไม่มีให้ถือว่าเป็น false (ไม่บังคับ)
+                const isImgRequired = t.require_image === true;
                 
                 return `
                 <div class="glass-card rounded-3xl border border-gray-800/80 overflow-hidden flex flex-col relative group ${isDone?'opacity-75 grayscale-[30%]':''}">
@@ -1101,7 +1055,7 @@ function renderFilteredNews(data) {
                         <span class="text-[9px] text-gaming-accent font-bold uppercase tracking-widest border border-gaming-accent/30 rounded px-1.5 py-0.5 inline-block mb-2 w-max">${t.task_type} MISSION</span>
                         <h3 class="font-bold text-white mb-2 leading-tight">${t.title}</h3>
                         <p class="text-xs text-gray-400 line-clamp-2 mb-4">${t.description}</p>
-                        <button onclick="openUploadModal('${t.id}', '${t.title.replace(/'/g,"\\'")}')" class="mt-auto w-full py-3 rounded-xl font-bold text-xs bg-gaming-dark border border-gray-700 text-white hover:border-gaming-primary hover:text-gaming-primary transition group-hover:shadow-[0_0_15px_rgba(14,165,233,0.2)]">
+                        <button onclick="openUploadModal('${t.id}', '${t.title.replace(/'/g,"\\'")}', ${isImgRequired})" class="mt-auto w-full py-3 rounded-xl font-bold text-xs bg-gaming-dark border border-gray-700 text-white hover:border-gaming-primary hover:text-gaming-primary transition group-hover:shadow-[0_0_15px_rgba(14,165,233,0.2)]">
                             SEND REPORT
                         </button>
                     </div>
@@ -1111,10 +1065,21 @@ function renderFilteredNews(data) {
         }
 
         // Upload Logic
-        function openUploadModal(taskId, title) {
+        function openUploadModal(taskId, title, requireImage = false) {
             document.getElementById('active-task-id').value = taskId;
+            document.getElementById('active-task-require-image').value = requireImage ? 'true' : 'false';
             document.getElementById('modal-task-title').innerText = title;
-            removeTaskImage(); // reset
+            
+            // อัปเดต Label รูปภาพตามสถานะบังคับ/ไม่บังคับ
+            const imgLabel = document.getElementById('task-image-label');
+            if (requireImage) {
+                imgLabel.innerHTML = 'รูปภาพหลักฐาน <span class="text-gaming-danger">(บังคับ)</span>';
+            } else {
+                imgLabel.innerHTML = 'รูปภาพหลักฐาน <span class="text-gray-500">(ไม่บังคับ)</span>';
+            }
+
+            document.getElementById('task-note').value = ''; // Reset text
+            removeTaskImage(); // Reset image
             openModal('modal-task');
         }
 
@@ -1161,7 +1126,21 @@ function renderFilteredNews(data) {
         }
 
         async function submitTask() {
-            if(!AppState.selectedTaskFile) { showToast('กรุณาอัปโหลดรูปภาพ', 'warning'); return; }
+            const noteText = document.getElementById('task-note').value.trim();
+            const requireImage = document.getElementById('active-task-require-image').value === 'true';
+            
+            // Validate: ถ้าระบบตั้งว่าบังคับรูป แต่ไม่มีการแนบรูป
+            if(requireImage && !AppState.selectedTaskFile) {
+                showToast('ภารกิจนี้บังคับให้อัปโหลดรูปภาพหลักฐาน', 'warning'); 
+                return; 
+            }
+
+            // Validate: ถ้าไม่บังคับรูป แต่อย่างน้อยต้องกรอกข้อความหรือแนบรูปมาสักอย่าง
+            if(!AppState.selectedTaskFile && !noteText) { 
+                showToast('กรุณาอัปโหลดรูปภาพหรือกรอกข้อความรายละเอียด', 'warning'); 
+                return; 
+            }
+
             if(AppState.isSubmitting) return;
             
             const btn = document.getElementById('btn-submit-task');
@@ -1170,29 +1149,40 @@ function renderFilteredNews(data) {
             AppState.isSubmitting = true;
 
             try {
-                // 1. Compress
-                const compressedBlob = await compressImage(AppState.selectedTaskFile);
-                const fileName = `task_${AppState.currentUser.emp_code}_${Date.now()}.jpg`;
+                let publicUrl = null;
 
-                // 2. Upload Storage
-                const { error: uploadErr } = await dbClient.storage.from('hrd-portal-media').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-                if(uploadErr) throw uploadErr;
+                // 1. Upload Image if selected
+                if (AppState.selectedTaskFile) {
+                    const compressedBlob = await compressImage(AppState.selectedTaskFile);
+                    const fileName = `task_${AppState.currentUser.emp_code}_${Date.now()}.jpg`;
 
-                const { data: { publicUrl } } = dbClient.storage.from('hrd-portal-media').getPublicUrl(fileName);
+                    const { error: uploadErr } = await dbClient.storage.from('hrd-portal-media').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+                    if(uploadErr) throw uploadErr;
 
-                // 3. Insert Database
+                    const { data } = dbClient.storage.from('hrd-portal-media').getPublicUrl(fileName);
+                    publicUrl = data.publicUrl;
+                }
+
+                // 2. Insert Database
                 const taskId = document.getElementById('active-task-id').value;
-                const { error: dbErr } = await dbClient.from('task_submissions').insert([{
+                const insertData = {
                     task_id: taskId,
                     employee_id: AppState.currentUser.id,
-                    proof_image_url: publicUrl
-                }]);
+                    note: noteText // Make sure the column 'note' exists in your 'task_submissions' table
+                };
+                
+                if (publicUrl) {
+                    insertData.proof_image_url = publicUrl;
+                }
+
+                const { error: dbErr } = await dbClient.from('task_submissions').insert([insertData]);
                 if(dbErr) throw dbErr;
 
                 showToast('ส่งภารกิจสำเร็จ! รอการตรวจสอบ', 'success');
                 closeModal('modal-task');
                 fetchTasks(); // Reload
             } catch(e) {
+                console.error(e);
                 showToast('เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
             } finally {
                 AppState.isSubmitting = false;
@@ -1221,9 +1211,6 @@ function renderFilteredNews(data) {
                         ${isOut ? 'SOLD OUT' : `STOCK: ${r.stock}`}
                     </div>
                     <div class="h-48 overflow-hidden relative p-4">
- <div class="absolute top-3 left-3 z-20 bg-emerald-500 text-black text-xs font-bold px-2 py-1 rounded">
-        STOCK: ${r.stock}
-    </div>
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gaming-card opacity-50 z-0"></div>
                         <img src="${img}" class="w-full h-full object-contain relative z-10 group-hover:scale-110 transition duration-500 drop-shadow-2xl" loading="lazy">
                     </div>
@@ -1255,7 +1242,6 @@ function renderFilteredNews(data) {
 
             showLoader('PROCESSING TRANSACTION...');
             try {
-                // Call RPC Transaction
                 const { error } = await dbClient.rpc('redeem_reward_txn', { p_emp_id: AppState.currentUser.id, p_reward_id: rewardId });
                 if(error) {
                     if(error.message.includes('คะแนนไม่เพียงพอ')) throw new Error('คะแนนไม่เพียงพอ');
@@ -1264,11 +1250,8 @@ function renderFilteredNews(data) {
                 }
                 
                 showToast('แลกรางวัลสำเร็จ! กรุณาตรวจสอบ QR Code ในหน้า My Rewards', 'success');
-                // Refresh App State
                 await loadUserProfile(AppState.currentUser.id);
                 fetchRewards();
-                
-                // Switch to redemptions tab to show QR
                 setTimeout(() => navTo('redemptions'), 1500);
 
             } catch(e) {
@@ -1314,7 +1297,7 @@ function renderFilteredNews(data) {
             document.getElementById('qr-ref-code').innerText = 'REF: ' + val.substring(0,8).toUpperCase();
             
             const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = ''; // clear old
+            qrContainer.innerHTML = ''; 
             new QRCode(qrContainer, {
                 text: val, width: 200, height: 200,
                 colorDark : "#0b1120", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
@@ -1361,7 +1344,7 @@ function renderFilteredNews(data) {
             renderDirectory(filtered);
         }
 
-        // --- DOCUMENTS & PRIVILEGES (Simple renders) ---
+        // --- DOCUMENTS & PRIVILEGES ---
         async function fetchDocuments() {
             const { data } = await dbClient.from('documents').select('*').order('created_at', {ascending: false});
             const container = document.getElementById('docs-grid');
@@ -1402,10 +1385,10 @@ function renderFilteredNews(data) {
             lucide.createIcons();
         }
 
-        // --- ADMIN ZONE (Mockup/Simplified) ---
+        // --- ADMIN ZONE ---
         async function fetchAdminData() {
-            // Load pending tasks
-            const { data: pending } = await dbClient.from('task_submissions').select(`id, created_at, proof_image_url, tasks(title, points_reward), employee_directory(full_name)`).eq('status', 'pending');
+            // Updated to fetch 'note' field as well
+            const { data: pending } = await dbClient.from('task_submissions').select(`id, created_at, proof_image_url, note, tasks(title, points_reward), employee_directory(full_name)`).eq('status', 'pending');
             
             document.getElementById('pending-task-count').innerText = pending?.length || 0;
             
@@ -1414,23 +1397,28 @@ function renderFilteredNews(data) {
             else {
                 container.innerHTML = pending.map(sub => `
                     <div class="p-4 bg-gaming-dark/50 rounded-xl border border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div class="flex items-center space-x-3">
-                            <a href="${sub.proof_image_url}" target="_blank" class="shrink-0"><img src="${sub.proof_image_url}" class="w-12 h-12 rounded object-cover border border-gray-700 hover:border-gaming-primary transition"></a>
-                            <div>
+                        <div class="flex items-start space-x-3 w-full">
+                            <a href="${sub.proof_image_url || '#'}" target="_blank" class="shrink-0 mt-1">
+                                ${sub.proof_image_url ? 
+                                `<img src="${sub.proof_image_url}" class="w-12 h-12 rounded object-cover border border-gray-700 hover:border-gaming-primary transition">` : 
+                                `<div class="w-12 h-12 rounded bg-gray-800 flex items-center justify-center border border-gray-700"><i data-lucide="file-text" class="text-gray-500 w-5 h-5"></i></div>`}
+                            </a>
+                            <div class="flex-1">
                                 <p class="text-xs text-gaming-primary font-bold">Mission: ${sub.tasks.title} (+${sub.tasks.points_reward})</p>
                                 <p class="text-sm text-white font-medium">${sub.employee_directory.full_name}</p>
-                                <p class="text-[9px] text-gray-500">${new Date(sub.created_at).toLocaleString()}</p>
+                                ${sub.note ? `<div class="text-xs text-gray-300 mt-1 bg-gaming-dark p-2 rounded-lg border border-gray-700 italic">📝 "${sub.note}"</div>` : ''}
+                                <p class="text-[9px] text-gray-500 mt-1"><i data-lucide="clock" class="w-3 h-3 inline pb-0.5"></i> ${new Date(sub.created_at).toLocaleString()}</p>
                             </div>
                         </div>
-                        <div class="flex space-x-2 w-full md:w-auto">
+                        <div class="flex space-x-2 w-full md:w-auto mt-3 md:mt-0">
                             <button onclick="approveTask('${sub.id}')" class="flex-1 md:flex-none px-4 py-2 bg-gaming-success/20 text-gaming-success border border-gaming-success/50 rounded-lg text-xs font-bold hover:bg-gaming-success hover:text-white transition">APPROVE</button>
                             <button onclick="rejectTask('${sub.id}')" class="flex-1 md:flex-none px-4 py-2 bg-gaming-danger/20 text-gaming-danger border border-gaming-danger/50 rounded-lg text-xs font-bold hover:bg-gaming-danger hover:text-white transition">REJECT</button>
                         </div>
                     </div>
                 `).join('');
+                lucide.createIcons();
             }
 
-            // Simple Chart mock
             const ctx = document.getElementById('adminChartPoints').getContext('2d');
             if(window.adminChart) window.adminChart.destroy();
             window.adminChart = new Chart(ctx, {
@@ -1443,11 +1431,10 @@ function renderFilteredNews(data) {
         async function approveTask(id) {
             showLoader();
             try {
-                // Call RPC to approve and give points safely
                 const { error } = await dbClient.rpc('approve_task_txn', { p_submission_id: id });
                 if(error) throw error;
                 showToast('Approved task successfully', 'success');
-                fetchAdminData(); // Reload
+                fetchAdminData(); 
             } catch(e) { showToast(e.message, 'error'); } finally { hideLoader(); }
         }
         
@@ -1466,10 +1453,10 @@ function renderFilteredNews(data) {
             setTimeout(() => {
                 hideLoader();
                 showToast('Synced data from Google Sheet successfully!', 'success');
-                // Note: In real life, this button would trigger a Make.com webhook which updates Supabase.
             }, 2000);
         }
- function logoutSession() {
+        
+        function logoutSession() {
             localStorage.removeItem('hrd_mock_session');
             location.reload();
         }
